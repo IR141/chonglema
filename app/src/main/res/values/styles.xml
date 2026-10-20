@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Chonglema" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!-- 窗口底色也用跟随主题的 splash 底色：Android 12 以下没有系统闪屏，靠它避免「深色闪一下再进浅色界面」 -->
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+
+    <!-- 冷启动闪屏：跟随主题的纯色底 + 无底板双色环，退出后接 Theme.Chonglema -->
+    <style name="Theme.Chonglema.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.Chonglema</item>
+    </style>
+</resources>

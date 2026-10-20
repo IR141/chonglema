@@ -1,0 +1,16 @@
+# 统一换行，避免 Windows 检出后 CI / Linux 上脚本失效
+* text=auto eol=lf
+
+# Windows 批处理必须是 CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Gradle wrapper 脚本必须是 LF
+gradlew text eol=lf
+
+# 二进制
+*.jar binary
+*.png binary
+*.jpg binary
+*.webp binary
+*.apk binary

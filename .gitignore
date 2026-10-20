@@ -1,0 +1,33 @@
+# Gradle / AGP
+.gradle/
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# 本机路径，不提交
+local.properties
+
+# IDE
+.idea/
+*.iml
+*.hprof
+
+# Kotlin
+.kotlin/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 签名文件与密钥：永远不要提交
+*.jks
+*.keystore
+keystore.properties
+*.p12
+*.pem
+
+# 本地产物
+*.apk
+*.aab

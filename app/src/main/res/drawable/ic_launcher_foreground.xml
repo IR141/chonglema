@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 图标前景：实心双色环（上半粉 #FF4F8B、下半蓝 #2563EB），外缘 31.5dp 落在 66dp 安全区内 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 上半环（粉）：外圆 31.5 / 内圆 22.5，平口落在水平直径上 -->
+    <path
+        android:pathData="M22.5,54 A31.5,31.5 0 0 1 85.5,54 L76.5,54 A22.5,22.5 0 0 0 31.5,54 Z"
+        android:fillColor="#FF4F8B" />
+    <!-- 下半环（蓝） -->
+    <path
+        android:pathData="M22.5,54 A31.5,31.5 0 0 0 85.5,54 L76.5,54 A22.5,22.5 0 0 1 31.5,54 Z"
+        android:fillColor="#2563EB" />
+</vector>

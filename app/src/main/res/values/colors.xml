@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 启动画面底色：跟随深浅主题（白天浅蓝、夜间近黑），和首页背景一致，切页不闪 -->
+    <color name="splash_background">#F4F8FF</color>
+</resources>
