@@ -37,20 +37,22 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.qingqian.chonglema.stats.GoalProgress
+import com.qingqian.chonglema.stats.ChallengeProgress
 import com.qingqian.chonglema.ui.theme.LocalDarkTheme
 import java.time.LocalDate
 
-/** 首页顶部的大卡片：今日次数、目标进度和两个主按钮。 */
+/** 首页顶部的大卡片：今日次数、挑战进度和两个主按钮。 */
 @Composable
 internal fun TodayHeroCard(
     count: Int,
     resistCount: Int,
     lastTime: String?,
-    goal: GoalProgress?,
+    challenge: ChallengeProgress?,
+    challengeHidden: Boolean = false,
     onCheckIn: () -> Unit,
     onResist: () -> Unit,
     onOpenReport: () -> Unit,
+    onChallengeClick: () -> Unit,
 ) {
     val isDark = LocalDarkTheme.current
     val haptics = LocalHapticFeedback.current
@@ -67,6 +69,8 @@ internal fun TodayHeroCard(
             listOf(Color(0xFF2F7DFF), Color(0xFF5B7CFF))
         },
     )
+    // 挑战相关点击统一进「自律和配额」页，选天数并点确认后才开始
+    val challengeAction = onChallengeClick
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -97,18 +101,23 @@ internal fun TodayHeroCard(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 Spacer(Modifier.weight(1f))
-                if (goal != null) {
+                // 挑战失败后不再显示「挑战中断 / 坚持 N 天」，只在下方保留「挑战失败」提示。
+                if (!challengeHidden && challenge?.failed != true) {
                     Column(
                         horizontalAlignment = Alignment.End,
-                        modifier = Modifier.padding(bottom = 10.dp),
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = challengeAction)
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
                     ) {
                         Text(
-                            text = goal.periodLabel + "目标",
+                            text = challengeTitle(challenge),
                             fontSize = 12.sp,
                             color = Color.White.copy(alpha = 0.75f),
                         )
                         Text(
-                            text = goal.doneCount.toString() + " / " + goal.target,
+                            text = challengeValue(challenge),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.White,
@@ -132,10 +141,11 @@ internal fun TodayHeroCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.82f),
             )
-            if (goal != null) {
+            if (!challengeHidden) {
                 Spacer(Modifier.height(10.dp))
-                LinearProgressIndicator(
-                    progress = { goal.progress },
+                if (challenge != null) {
+                    LinearProgressIndicator(
+                    progress = { challenge.progressFraction },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(6.dp)
@@ -146,11 +156,27 @@ internal fun TodayHeroCard(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = goalHintText(goal),
+                    text = challengeHint(challenge),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (goal.over) Color(0xFFFFDCDC) else Color.White.copy(alpha = 0.85f),
-                    fontWeight = if (goal.over) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (challenge.failed) Color(0xFFFFDCDC)
+                    else Color.White.copy(alpha = 0.85f),
+                    fontWeight = if (challenge.failed) FontWeight.SemiBold else FontWeight.Normal,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable(onClick = challengeAction)
+                        .padding(horizontal = 2.dp, vertical = 2.dp),
                 )
+                } else {
+                    Text(
+                        text = "还没有进行中的挑战 · 点这里选天数",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .clickable(onClick = challengeAction)
+                            .padding(horizontal = 2.dp, vertical = 2.dp),
+                    )
+                }
             }
             Spacer(Modifier.height(16.dp))
             Row {
@@ -190,8 +216,24 @@ internal fun TodayHeroCard(
     }
 }
 
-private fun goalHintText(goal: GoalProgress): String = when {
-    goal.over -> "已超目标 " + (goal.doneCount - goal.target) + " 次"
-    goal.reached -> "不能再冲了"
-    else -> "还能冲 " + goal.remaining + " 次"
+private fun challengeTitle(challenge: ChallengeProgress?): String = when {
+    challenge == null -> "挑战"
+    challenge.completed -> "挑战成功"
+    challenge.failed -> "挑战中断"
+    challenge.lastDay -> "挑战 · 最后一天"
+    else -> "挑战进度"
+}
+
+private fun challengeValue(challenge: ChallengeProgress?): String = when {
+    challenge == null -> "未开始"
+    challenge.completed -> challenge.days.toString() + " / " + challenge.days + " 天"
+    challenge.failed -> "坚持 " + challenge.cleanDays + " 天"
+    else -> challenge.dayIndex.toString() + " / " + challenge.days + " 天"
+}
+
+private fun challengeHint(challenge: ChallengeProgress): String = when {
+    challenge.completed -> "挑战成功 🎉 点这里再来一次"
+    challenge.failed -> "挑战失败"
+    challenge.lastDay -> "今晚守住就成功了"
+    else -> "还剩 " + challenge.daysLeft + " 天"
 }

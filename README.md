@@ -2,9 +2,9 @@
 
 > 记录每一次，了解自己。
 
-一个**纯本地**的自律打卡 Android App：记录、统计、自律目标、挑战与徽章。Kotlin + Jetpack Compose 从零手写，不联网、不申请任何权限，数据只存在手机本机的 SQLite 里。
+一个**纯本地**的自律打卡 Android App：记录、统计、挑战与徽章、次数配额。Kotlin + Jetpack Compose 从零手写，不联网、不申请任何权限，数据只存在手机本机的 SQLite 里。
 
-![minSdk](https://img.shields.io/badge/minSdk-26-blue) ![targetSdk](https://img.shields.io/badge/targetSdk-37-blue) ![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF) ![Compose](https://img.shields.io/badge/Compose-BOM%202026.09.00-4285F4) ![License](https://img.shields.io/badge/License-Apache--2.0-green) ![version](https://img.shields.io/badge/version-1.0-blue)
+![minSdk](https://img.shields.io/badge/minSdk-26-blue) ![targetSdk](https://img.shields.io/badge/targetSdk-37-blue) ![Kotlin](https://img.shields.io/badge/Kotlin-2.2.10-7F52FF) ![Compose](https://img.shields.io/badge/Compose-BOM%202026.09.00-4285F4) ![License](https://img.shields.io/badge/License-Apache--2.0-green) ![version](https://img.shields.io/badge/version-1.1-blue)
 
 > 内容涉及成人话题，仅面向成年用户。本项目只做记录与统计，不构成任何医学或心理建议。
 
@@ -14,20 +14,24 @@
 | --- | --- | --- | --- |
 | ![首页亮色](docs/screenshots/home-light.png) | ![首页夜间](docs/screenshots/home-dark.png) | ![报表趋势](docs/screenshots/report-trend.png) | ![热力图](docs/screenshots/report-day-dialog.png) |
 
-| 搜索与筛选 | 自律目标 | 设置页 | 启动画面（夜间） |
+| 搜索与筛选 | 挑战进行中 | 挑战成功 | 次数配额 |
 | --- | --- | --- | --- |
-| ![搜索](docs/screenshots/search.png) | ![自律目标](docs/screenshots/goals.png) | ![设置](docs/screenshots/settings.png) | ![闪屏](docs/screenshots/splash-dark.png) |
+| ![搜索](docs/screenshots/search.png) | ![挑战](docs/screenshots/challenge.png) | ![挑战成功](docs/screenshots/challenge-success.png) | ![次数配额](docs/screenshots/quota.png) |
+
+| 设置页 | 启动画面（夜间） |
+| --- | --- |
+| ![设置](docs/screenshots/settings.png) | ![闪屏](docs/screenshots/splash-dark.png) |
 
 图标换了 4 轮才定稿（深色底 + 粉蓝双色环），设计过程见 `docs/design/`。
 
 ## 功能
 
-- **今日卡片**：今天几次、上一发时间、「记一次」打开记录面板（时间 / 类型 / 备注）、「忍住了」单独记一条不留次数；有自律目标时显示周期进度和「还能冲 N 次 / 不能再冲了 / 已超目标 N 次」
+- **今日卡片**：今天几次、上一发时间、「记一次」打开记录面板（时间 / 类型 / 备注）、「忍住了」单独记一条不留次数；大卡右上角是**挑战进度**（未开始 / 进行中 X/N 天 / 最后一天 / 中断 / 成功），点它直接进挑战页；三张小卡下面的**次数配额**细卡显示「还剩 N 次 / 已超 N 次」
 - **打卡日历**：按次数深浅着色，格子里显示 `xN` 与 `忍M`；点有记录的日期进入当天编辑（改时间/类型/备注、单条删除、清空当天），点过去空日期可补记，补记也能补「忍住了」
 - **统计报表**：总 / 年 / 月 / 周四种周期，6 个核心指标 + 趋势对比（上一年 / 上一月 / 上一周）、年・月・周热力图（点任意格子看当天冲了/忍住几次）、时段分布、类型分布、柱状图
 - **搜索与筛选**：关键词搜备注/类型/日期/时间，叠加「全部时间 / 今年 / 本月」「全部 / 冲了 / 忍住」「类型」三组筛选，结果按日期分组
-- **自律目标**：每天 / 每周 / 每月 / 自定义起止，目标次数 0~999（可手输），改完点「确认」生效；超目标只变红提醒、不禁止记录
-- **挑战与徽章**：7 / 14 / 30 天挑战 + 13 枚里程碑徽章
+- **次数配额**：每天 / 每周 / 每月 / 自定义起止，配额次数 1~999（可手输），改完点「确认」生效；保存后设置项自动收起，只显示进度，修改时先「关闭配额」再重设；超过配额只变红提醒、不禁止记录
+- **挑战与徽章**：从点下「开始」的那一刻起，接下来 7 / 14 / 30 天每天都不许有「冲了」的记录；中途记了立刻中断，删掉那条记录就能复活。结果由记录实时计算（不单独存状态），保留挑战记录（最多 10 条，含成功 / 失败 / 已放弃，长按可删除）和 19 枚徽章
 - **年度报告**：全年总览、每月叠柱、星期/时段/类型分布、自动生成的年度亮点、一键复制文字总结
 - **外观**：白天蓝色系 / 夜间粉色系，默认跟随系统；夜间模式单独调过对比度
 - **数据**：JSON 备份导出 / 导入（自动去重合并）、清空全部数据；崩溃日志可导出成 txt
@@ -35,10 +39,10 @@
 
 ## 下载
 
-到 [Releases](https://github.com/IR141/chonglema/releases) 下载 `chonglema-v1.0-release.apk`，传到手机点击安装即可（约 1.7 MB）。
+到 [Releases](https://github.com/IR141/chonglema/releases) 下载 `chonglema-v1.1-release.apk`，传到手机点击安装即可（约 1.7 MB）。
 
 - 当前 release 用的是 **debug 签名**，好处是能直接覆盖安装、保留数据；如果你要自己发布，请换成自己的 keystore（见下）。
-- 从旧版升级用 `adb install -r` 覆盖，数据库会自动迁移。
+- 从旧版升级用 `adb install -r` 覆盖，数据库会自动迁移。这个版本是 **versionCode 46 / versionName 1.1**，可以直接覆盖之前的 4.x 内测版（versionCode 28）、1.0 公开版（versionCode 1）和 1.10.x 内测版（versionCode 45），数据保留。
 
 ## 从源码构建
 
@@ -97,7 +101,7 @@ app/src/main/
 │   ├── ChonglemaApp.kt        全局未捕获异常 → 本地崩溃日志
 │   ├── data/                  SQLite（手写 DAO）、各 Store（StateFlow + SharedPreferences）、备份、崩溃日志
 │   ├── stats/                 统计：记录聚合、报表周期、目标、挑战、徽章、年度报告
-│   └── ui/                    Compose：Home / Search / Report / Settings / Goals / Challenge / Annual + 组件与主题
+│   └── ui/                    Compose：Home / Search / Report / Settings / Quota / Challenge / Annual + 组件与主题
 ├── baseline-prof.txt          Baseline Profile（启动热路径，R8 后编进 assets/dexopt）
 └── res/                       图标（自适应三层）、闪屏、主题色
 ```

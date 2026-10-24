@@ -13,7 +13,7 @@ import com.qingqian.chonglema.data.ThemeMode
 import com.qingqian.chonglema.data.ThemeStore
 import com.qingqian.chonglema.data.TypeStore
 import com.qingqian.chonglema.model.CheckInRecord
-import com.qingqian.chonglema.stats.ChallengeState
+import com.qingqian.chonglema.stats.ChallengeAttempt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +39,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val _goal = MutableStateFlow(GoalConfig())
     private val _types = MutableStateFlow(TypeStore.DEFAULT_TYPES)
-    private val _challenge = MutableStateFlow<ChallengeState?>(null)
+    private val _attempts = MutableStateFlow<List<ChallengeAttempt>>(emptyList())
+    private val _celebrated = MutableStateFlow<Set<String>>(emptySet())
+    private val _homeChallengeHidden = MutableStateFlow(false)
+    private val _ready = MutableStateFlow(false)
     private val _launchTitle = MutableStateFlow(SettingsStore.TITLE_SENTENCES.first())
 
     val records = store.records
@@ -47,7 +50,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val themeMode = themeStore.mode
     val goal: StateFlow<GoalConfig> = _goal.asStateFlow()
     val types: StateFlow<List<String>> = _types.asStateFlow()
-    val challenge: StateFlow<ChallengeState?> = _challenge.asStateFlow()
+    val attempts: StateFlow<List<ChallengeAttempt>> = _attempts.asStateFlow()
+    val celebratedKeys: StateFlow<Set<String>> = _celebrated.asStateFlow()
+    val homeChallengeHidden: StateFlow<Boolean> = _homeChallengeHidden.asStateFlow()
+
+    /** 记录和挑战都读完了，首页可以判断「这次成功挑战要不要在启动时隐藏」。 */
+    val ready: StateFlow<Boolean> = _ready.asStateFlow()
 
     /** 冷启动抽一句标题，进程存活期间不变（读到之前先用第一句）。 */
     val launchTitle: StateFlow<String> = _launchTitle.asStateFlow()
@@ -67,8 +75,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             challengeStore = challenge
             _goal.value = setting.goal.value
             _types.value = type.types.value
-            _challenge.value = challenge.state.value
+            _attempts.value = challenge.attempts.value
+            _celebrated.value = challenge.celebratedKeys()
+            _homeChallengeHidden.value = challenge.homeChallengeHidden()
             _launchTitle.value = title
+            _ready.value = true
         }
     }
 
@@ -125,13 +136,34 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         return ImportResult(fresh.size, skipped)
     }
 
-    fun startChallenge(days: Int) = challenges().let { store ->
-        store.start(days)
-        _challenge.value = store.state.value
+    fun startChallenge(days: Int) = challenges().let { challenge ->
+        // 记录 id 水位：开始之后才写入的记录 id 一定比它大。
+        // 记录时间只到分钟，同一分钟内的先后顺序只能靠 id 判断。
+        val startRecordId = store.records.value.maxOfOrNull { it.id } ?: 0L
+        challenge.start(days, startRecordId = startRecordId)
+        // 新挑战开始，首页立刻恢复显示挑战信息
+        challenge.setHomeChallengeHidden(false)
+        _homeChallengeHidden.value = false
+        _attempts.value = challenge.attempts.value
     }
 
-    fun cancelChallenge() = challenges().let { store ->
-        store.cancel()
-        _challenge.value = store.state.value
+    fun cancelChallenge() = challenges().let { challenge ->
+        challenge.cancel()
+        _attempts.value = challenge.attempts.value
+    }
+
+    fun deleteChallenge(attempt: ChallengeAttempt) = challenges().let { challenge ->
+        challenge.delete(attempt)
+        _attempts.value = challenge.attempts.value
+    }
+
+    fun setHomeChallengeHidden(hidden: Boolean) {
+        challenges().setHomeChallengeHidden(hidden)
+        _homeChallengeHidden.value = hidden
+    }
+
+    fun markChallengeCelebrated(attempt: ChallengeAttempt) {
+        challenges().markCelebrated(attempt)
+        _celebrated.value = challenges().celebratedKeys()
     }
 }

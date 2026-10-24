@@ -453,7 +453,7 @@ private fun AboutCard() {
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "冲了吗 v1.0",
+                text = "冲了吗 v1.1",
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
@@ -461,12 +461,7 @@ private fun AboutCard() {
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "小提示：点首页中间的大卡片看统计报表；卡片下面三个按钮进自律目标、挑战与徽章、年度报告；首页右上角放大镜可以搜索和筛选记录。",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+
         }
     }
 }

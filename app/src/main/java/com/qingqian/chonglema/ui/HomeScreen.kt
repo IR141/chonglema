@@ -1,5 +1,6 @@
 package com.qingqian.chonglema.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -24,6 +25,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -40,13 +42,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.qingqian.chonglema.data.GoalConfig
 import com.qingqian.chonglema.model.CheckInRecord
+import com.qingqian.chonglema.stats.ChallengeProgress
 import com.qingqian.chonglema.stats.CheckInStats
+import com.qingqian.chonglema.stats.GoalProgress
 import com.qingqian.chonglema.stats.computeGoalProgress
 import java.time.Duration
 import java.time.LocalDate
@@ -91,6 +96,8 @@ fun HomeScreen(
     today: LocalDate,
     stats: CheckInStats,
     goal: GoalConfig,
+    challenge: ChallengeProgress?,
+    challengeHidden: Boolean,
     types: List<String>,
     onAddType: (String) -> String?,
     onRemoveType: (String) -> String?,
@@ -104,9 +111,8 @@ fun HomeScreen(
     onResist: (LocalDate, LocalTime) -> Unit,
     onOpenReport: () -> Unit,
     onOpenSettings: () -> Unit,
-    onOpenGoals: () -> Unit,
-    onOpenChallenge: () -> Unit,
-    onOpenAnnual: () -> Unit,
+    onOpenAutonomy: () -> Unit,
+    onOpenBadges: () -> Unit,
     onOpenSearch: () -> Unit,
 ) {
     // today / stats 由 App 统一算好传进来，这里不再重复统计
@@ -203,7 +209,8 @@ fun HomeScreen(
                 count = stats.todayCount,
                 resistCount = stats.resistToday,
                 lastTime = lastToday?.time,
-                goal = goalProgress,
+                challenge = challenge,
+                challengeHidden = challengeHidden,
                 onCheckIn = {
                     sheetDismissOnAdd = true
                     sheetEditMode = false
@@ -211,16 +218,16 @@ fun HomeScreen(
                 },
                 onResist = { quickResist() },
                 onOpenReport = onOpenReport,
+                onChallengeClick = onOpenAutonomy,
             )
             Spacer(Modifier.height(10.dp))
-            // 目标与回顾的三个入口，从大卡片下面直接进
+            // 大卡片下面两个入口：自律与配额是主功能，勋章单独一页
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                EntryButton("自律目标", Modifier.weight(1f), onOpenGoals)
-                EntryButton("挑战与徽章", Modifier.weight(1f), onOpenChallenge)
-                EntryButton("年度报告", Modifier.weight(1f), onOpenAnnual)
+                EntryButton("自律和配额", Modifier.weight(1f), onOpenAutonomy)
+                EntryButton("勋章", Modifier.weight(1f), onOpenBadges)
             }
             Spacer(Modifier.height(10.dp))
             // 三张卡等高：以最高的那张为准，避免「44.5 天」把第三张撑高
@@ -247,6 +254,11 @@ fun HomeScreen(
                     label = "平均一次",
                     sub = "本月频率",
                 )
+            }
+            // 配额卡只在设置了配额时出现，隐藏时不占高度（不加动画）。
+            if (goalProgress != null) {
+                Spacer(Modifier.height(10.dp))
+                QuotaCard(progress = goalProgress, onClick = onOpenAutonomy)
             }
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -416,5 +428,78 @@ fun HomeScreen(
                 sheetDismissOnAdd = false
             },
         )
+    }
+}
+
+/**
+ * 次数配额细卡：原来首页大卡片上的「本周目标 5/3」降级到这里，点进去才改。
+ * 超额只提醒，不阻止记录。
+ */
+@Composable
+internal fun QuotaCard(progress: GoalProgress?, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "次数配额",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = if (progress == null) {
+                        "未设置"
+                    } else {
+                        progress.periodLabel + " " + progress.doneCount + " / " + progress.target + " 次"
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Icon(
+                    Icons.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 2.dp),
+                )
+            }
+            if (progress != null) {
+                Spacer(Modifier.height(7.dp))
+                LinearProgressIndicator(
+                    progress = { progress.progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = if (progress.over) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    drawStopIndicator = {},
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = when {
+                        progress.over -> "已超 " + (progress.doneCount - progress.target) + " 次"
+                        progress.reached -> "正好到上限"
+                        else -> "还剩 " + progress.remaining + " 次"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (progress.over) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "点这里设置每天 / 每周 / 每月最多几次",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }

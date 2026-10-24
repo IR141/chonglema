@@ -100,6 +100,8 @@ fun ReportScreen(
     val allResistCounts = remember(records) { countByDate(records.filter { it.isResist }) }
     // 点热力图里某一天 → 弹窗显示当天冲了/忍住各多少次
     var selectedDay by remember { mutableStateOf<LocalDate?>(null) }
+    // 点柱状图某根柱子 → 弹窗显示这一格冲了/忍住各多少次
+    var selectedBar by remember { mutableStateOf<Int?>(null) }
 
     val currentMonth = remember(today) { YearMonth.from(today) }
     // 允许回看没有记录的年/月/周，只限制不早于 MIN_REPORT_YEAR
@@ -220,7 +222,7 @@ fun ReportScreen(
             Spacer(Modifier.height(20.dp))
             TypeDistributionCard(types = types, typeCounts = report.typeCounts)
             Spacer(Modifier.height(20.dp))
-            BarCard(report = report, period = period)
+            BarCard(report = report, period = period, onBarClick = { selectedBar = it })
             Spacer(Modifier.height(32.dp))
         }
     }
@@ -248,6 +250,45 @@ fun ReportScreen(
             },
             confirmButton = {
                 TextButton(onClick = { selectedDay = null }) { Text("关闭") }
+            },
+        )
+    }
+
+    selectedBar?.let { index ->
+        val done = report.barDone.getOrElse(index) { 0 }
+        val resist = report.barResist.getOrElse(index) { 0 }
+        val barTitle = when (period) {
+            ReportPeriod.ALL -> (report.barLabels.getOrNull(index) ?: "") + " 年"
+            ReportPeriod.YEAR -> year.toString() + " 年 " + (report.barLabels.getOrNull(index) ?: "") + " 月"
+            ReportPeriod.MONTH -> dateLabel(
+                LocalDate.of(
+                    range.startDate.year,
+                    range.startDate.monthValue,
+                    (index + 1).coerceAtMost(range.startDate.lengthOfMonth()),
+                )
+            )
+            ReportPeriod.WEEK -> dateLabel(range.startDate.plusDays(index.toLong()))
+        }
+        AlertDialog(
+            onDismissRequest = { selectedBar = null },
+            title = { Text(barTitle, fontWeight = FontWeight.SemiBold) },
+            text = {
+                Column {
+                    if (done == 0 && resist == 0) {
+                        Text(
+                            text = "这一格没有记录。",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        DayCountRow("冲了", done, MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.height(6.dp))
+                        DayCountRow("忍住", resist, MaterialTheme.colorScheme.tertiary)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedBar = null }) { Text("关闭") }
             },
         )
     }

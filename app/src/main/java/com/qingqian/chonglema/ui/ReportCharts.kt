@@ -598,7 +598,11 @@ internal fun TypeDistributionCard(types: List<String>, typeCounts: Map<String, I
 }
 
 @Composable
-internal fun BarCard(report: PeriodReport, period: ReportPeriod) {
+internal fun BarCard(
+    report: PeriodReport,
+    period: ReportPeriod,
+    onBarClick: (Int) -> Unit = {},
+) {
     val title = when (period) {
         ReportPeriod.ALL -> "历年次数"
         ReportPeriod.YEAR -> "每月次数"
@@ -631,7 +635,7 @@ internal fun BarCard(report: PeriodReport, period: ReportPeriod) {
             ) {
                 report.barLabels.indices.forEach { index ->
                     BoxWithConstraints(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).clickable { onBarClick(index) },
                         contentAlignment = Alignment.BottomCenter,
                     ) {
                         // 只有一两年时限制单根柱子的最大宽度，避免「历年次数」糊满整张卡
